@@ -4,12 +4,21 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
+	"log"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 )
 
-func getSingleLinkageClusters(inputPath string, cutOff float64) ([]string, []int) {
+// clusterInfo holds information about a single cluster member
+type clusterInfo struct {
+	Label     string
+	ClusterID int
+}
+
+// getSingleLinkageClusters reads pairwise distances from the input file, forms clusters based on the cutoff distance, and returns cluster members and their IDs
+func getSingleLinkageClusters(inputPath string, cutOff float64) ([]clusterInfo, error) {
 	clustersID := make(map[string]int)
 	clusterMembers := make(map[int]map[string]bool)
 	labelsSet := make(map[string]bool)
@@ -17,7 +26,7 @@ func getSingleLinkageClusters(inputPath string, cutOff float64) ([]string, []int
 	numClusters := 0
 	file, err := os.Open(inputPath)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	defer file.Close()
 
@@ -25,15 +34,17 @@ func getSingleLinkageClusters(inputPath string, cutOff float64) ([]string, []int
 	for scanner.Scan() {
 		line := scanner.Text()
 		parts := strings.Fields(line)
+		if len(parts) < 3 {
+			continue // Skip lines that don't have enough parts
+		}
 		label1, label2, distanceStr := parts[0], parts[1], parts[2]
 
-		if _, exists := labelsSet[label1]; !exists {
-			labelsSet[label1] = true
-		}
+		labelsSet[label1] = true
+		labelsSet[label2] = true
 
 		distance, err := strconv.ParseFloat(distanceStr, 64)
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
 
 		if distance >= cutOff {
@@ -44,11 +55,10 @@ func getSingleLinkageClusters(inputPath string, cutOff float64) ([]string, []int
 		in2, ok2 := clustersID[label2]
 
 		if !ok1 && !ok2 {
-			clustersID[label1] = numClusters
-			clustersID[label2] = numClusters
-			clusterMembers[numClusters] = make(map[string]bool)
-			clusterMembers[numClusters][label1] = true
-			clusterMembers[numClusters][label2] = true
+			clusterID := numClusters
+			clustersID[label1] = clusterID
+			clustersID[label2] = clusterID
+			clusterMembers[clusterID] = map[string]bool{label1: true, label2: true}
 			numClusters++
 		} else if ok1 && !ok2 {
 			clustersID[label2] = in1
@@ -65,43 +75,57 @@ func getSingleLinkageClusters(inputPath string, cutOff float64) ([]string, []int
 		}
 	}
 
-	labelsList := make([]string, 0, len(labelsSet))
-	for label := range labelsSet {
-		labelsList = append(labelsList, label)
+	var clusters []clusterInfo
+	for label, id := range clustersID {
+		clusters = append(clusters, clusterInfo{Label: label, ClusterID: id})
 	}
 
-	clusterLabels := make([]int, len(labelsList))
-	for i, label := range labelsList {
-		clusterLabels[i] = clustersID[label]
-	}
-
-	return labelsList, clusterLabels
+	return clusters, nil
 }
 
-func exportClusters(outputPath string, labelsList []string, clusterLabels []int) {
+// exportClusters writes the cluster members and their IDs to the output file, sorted first by cluster ID and then by label
+func exportClusters(outputPath string, clusters []clusterInfo) error {
 	file, err := os.Create(outputPath)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	defer file.Close()
 
-	for i, label := range labelsList {
-		fmt.Fprintf(file, "%d\t%s\n", clusterLabels[i], label)
+	// Sort clusters by ClusterID, then by Label
+	sort.Slice(clusters, func(i, j int) bool {
+		if clusters[i].ClusterID == clusters[j].ClusterID {
+			return clusters[i].Label < clusters[j].Label
+		}
+		return clusters[i].ClusterID < clusters[j].ClusterID
+	})
+
+	for _, cluster := range clusters {
+		if _, err := fmt.Fprintf(file, "%d\t%s\n", cluster.ClusterID, cluster.Label); err != nil {
+			return err
+		}
 	}
+
+	return nil
 }
 
 func main() {
-	input := flag.String("input", "", "Path to the input sparse matrix file")
-	output := flag.String("output", "", "Path to the output file")
-	cutoff := flag.Float64("cutoff", 0.0, "Distance cutoff for clustering")
+	input := flag.String("input", "", "Path to the input file containing pairwise distances")
+	output := flag.String("output", "", "Path to the output file for cluster assignments")
+	cutoff := flag.Float64("cutoff", 0.0, "Distance cutoff for clustering (must be greater than 0)")
 	flag.Parse()
 
 	if *input == "" || *output == "" || *cutoff == 0.0 {
-		fmt.Println("Input, output, and cutoff parameters are required.")
+		log.Println("Input, output, and cutoff parameters are required.")
 		flag.Usage()
-		os.Exit(1)
+		return
 	}
 
-	labelsList, clusterLabels := getSingleLinkageClusters(*input, *cutoff)
-	exportClusters(*output, labelsList, clusterLabels)
+	clusters, err := getSingleLinkageClusters(*input, *cutoff)
+	if err != nil {
+		log.Fatalf("Error processing clusters: %v", err)
+	}
+
+	if err := exportClusters(*output, clusters); err != nil {
+		log.Fatalf("Error exporting clusters: %v", err)
+	}
 }
