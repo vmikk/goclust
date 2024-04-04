@@ -47,7 +47,7 @@ func getSingleLinkageClusters(inputPath string, cutOff float64) ([]clusterInfo, 
 			return nil, err
 		}
 
-		if distance >= cutOff {
+		if distance > cutOff {
 			continue
 		}
 
