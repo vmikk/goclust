@@ -75,12 +75,27 @@ func getSingleLinkageClusters(inputPath string, cutOff float64) ([]clusterInfo, 
 		}
 	}
 
+	// Reassign cluster IDs to be zero-based and sequential
+	sequentialClusters := reassignClusterIDs(clustersID)
+
+	return sequentialClusters, nil
+}
+
+// Function to reassign cluster IDs sequentially
+func reassignClusterIDs(clustersID map[string]int) []clusterInfo {
+	newID := 0
+	oldToNewID := make(map[int]int)
 	var clusters []clusterInfo
-	for label, id := range clustersID {
-		clusters = append(clusters, clusterInfo{Label: label, ClusterID: id})
+
+	for label, oldID := range clustersID {
+		if _, exists := oldToNewID[oldID]; !exists {
+			oldToNewID[oldID] = newID
+			newID++
+		}
+		clusters = append(clusters, clusterInfo{Label: label, ClusterID: oldToNewID[oldID]})
 	}
 
-	return clusters, nil
+	return clusters
 }
 
 // exportClusters writes the cluster members and their IDs to the output file, sorted first by cluster ID and then by label
