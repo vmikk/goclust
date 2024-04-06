@@ -35,4 +35,14 @@ This significantly reduces the time and space required to compute
 and store a matrix for large sequence sets. 
 Missing entries in the matrix are assumed to be at the maximum possible distance of 1.0.
 
+## Installation
+
+Download the `single_linkage` binary:
+
+```bash
+wget https://github.com/vmikk/single_linkage/releases/download/0.1/single_linkage
+chmod +x single_linkage
+./single_linkage
+``` 
+
 
