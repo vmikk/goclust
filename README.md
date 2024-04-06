@@ -24,3 +24,15 @@ This command is an alternative to the USEARCH clustering command:
 usearch -cluster_aggd mx.txt -clusterout clusters.txt -id 0.99 -linkage min
 ```
 
+
+## Description
+
+The input for clustering is a "sparse" distance matrix 
+estimated by `usearch -calc_distmx`, 
+which only stores a subset of distances, 
+omitting pairs with low identities as determined by the `maxdist` threshold. 
+This significantly reduces the time and space required to compute 
+and store a matrix for large sequence sets. 
+Missing entries in the matrix are assumed to be at the maximum possible distance of 1.0.
+
+
