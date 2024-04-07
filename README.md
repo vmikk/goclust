@@ -45,4 +45,13 @@ chmod +x single_linkage
 ./single_linkage
 ``` 
 
+## Usage
+
+The `single_linkage` tool is designed for clustering sequences based on a sparse distance matrix.   
+
+Usage example:
+```bash
+single_linkage --cutoff <float> --input <file> --output <file>
+```
+
 
