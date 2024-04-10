@@ -17,8 +17,10 @@ type clusterInfo struct {
 	ClusterID int
 }
 
-// getSingleLinkageClusters reads pairwise distances from the input file, forms clusters based on the cutoff distance, and returns cluster members and their IDs
-func getSingleLinkageClusters(inputPath string, cutOff float64) ([]clusterInfo, error) {
+// getSingleLinkageClusters reads pairwise distances from the input file,
+// forms clusters based on the cutoff distance,
+// and returns cluster members and their IDs
+func getSingleLinkageClusters(inputPath string, cutOff float64, includeEqual bool) ([]clusterInfo, error) {
 	clustersID := make(map[string]int)
 	clusterMembers := make(map[int]map[string]bool)
 	labelsSet := make(map[string]bool)
@@ -47,7 +49,8 @@ func getSingleLinkageClusters(inputPath string, cutOff float64) ([]clusterInfo, 
 			return nil, err
 		}
 
-		if distance > cutOff {
+		// Comparison with the cutoff depends on the `--includeequal` flag
+		if includeEqual && distance > cutOff || !includeEqual && distance >= cutOff {
 			continue
 		}
 
@@ -127,6 +130,8 @@ func main() {
 	input := flag.String("input", "", "Path to the input file containing pairwise distances")
 	output := flag.String("output", "", "Path to the output file for cluster assignments")
 	cutoff := flag.Float64("cutoff", 0.0, "Distance cutoff for clustering (must be greater than 0)")
+	includeEqual := flag.Bool("includeequal", true, "Include distances equal to cutoff in clustering (default is true; set it to false for strictly greater than cutoff)")
+
 	flag.Parse()
 
 	if *input == "" || *output == "" || *cutoff == 0.0 {
@@ -135,7 +140,7 @@ func main() {
 		return
 	}
 
-	clusters, err := getSingleLinkageClusters(*input, *cutoff)
+	clusters, err := getSingleLinkageClusters(*input, *cutoff, *includeEqual)
 	if err != nil {
 		log.Fatalf("Error processing clusters: %v", err)
 	}
