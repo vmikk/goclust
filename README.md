@@ -62,4 +62,5 @@ Parameters:
 
 - `--output`: The path to the output file where the cluster assignments will be saved. The output file will list each sequence along with its assigned cluster label.
 
+- `--includeequal`: This option determines whether distances equal to the specified cutoff should be included in the clustering process. By default, this option is set to true (`--includeequal=true`), allowing sequences with pairwise distances exactly equal to the cutoff to be included in the same cluster. Setting this option to false (`--includeEqual=false`) changes the clustering to only consider pairwise distances strictly greater than the cutoff value, potentially leading to more, smaller clusters.
 
