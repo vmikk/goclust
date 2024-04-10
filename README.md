@@ -51,7 +51,7 @@ The `single_linkage` tool is designed for clustering sequences based on a sparse
 
 Usage example:
 ```bash
-single_linkage --cutoff <float> --input <file> --output <file>
+single_linkage --cutoff <float> --includeequal=<bool> --input <file> --output <file>
 ```
 
 Parameters:
