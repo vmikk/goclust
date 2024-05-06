@@ -215,7 +215,9 @@ func main() {
 	output := flag.String("output", "", "Path to the output file for cluster assignments")
 	cutoff := flag.Float64("cutoff", 0.0, "Distance cutoff for clustering (must be greater than 0)")
 	includeEqual := flag.Bool("includeequal", true, "Include distances equal to cutoff in clustering (default is true; set it to false for strictly greater than cutoff)")
+	method := flag.String("method", "single", "Clustering method to use ('single' or 'complete')")
 
+	// Parse the command-line flags
 	flag.Parse()
 
 	if *input == "" || *output == "" || *cutoff == 0.0 {
@@ -224,7 +226,17 @@ func main() {
 		return
 	}
 
-	clusters, err := getSingleLinkageClusters(*input, *cutoff, *includeEqual)
+	// fmt.Printf("Using the %s method for clustering.\n", *method)
+
+	var clusters []clusterInfo
+	var err error
+
+	if *method == "single" {
+		clusters, err = getSingleLinkageClusters(*input, *cutoff, *includeEqual)
+	} else {
+		clusters, err = getCompleteLinkageClusters(*input, *cutoff, *includeEqual)
+	}
+
 	if err != nil {
 		log.Fatalf("Error processing clusters: %v", err)
 	}
