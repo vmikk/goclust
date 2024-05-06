@@ -150,6 +150,20 @@ func getCompleteLinkageClusters(inputPath string, cutOff float64, includeEqual b
 	return sequentialClusters, nil
 }
 
+// Helper functions to handle max distances and merging
+func updateMaxDistance(maxDistances map[int]float64, newDistance float64, clusterID int) {
+	if currentMax, exists := maxDistances[clusterID]; !exists || newDistance > currentMax {
+		maxDistances[clusterID] = newDistance
+	}
+}
+
+func mergeClusters(clusterMembers map[int]map[string]bool, clustersID map[string]int, dest, src int) {
+	for label := range clusterMembers[src] {
+		clustersID[label] = dest
+		clusterMembers[dest][label] = true
+	}
+	delete(clusterMembers, src)
+}
 
 // Function to reassign cluster IDs sequentially
 func reassignClusterIDs(clustersID map[string]int) []clusterInfo {
