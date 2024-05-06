@@ -17,9 +17,12 @@ type clusterInfo struct {
 	ClusterID int
 }
 
-// getSingleLinkageClusters reads pairwise distances from the input file,
-// forms clusters based on the cutoff distance,
-// and returns cluster members and their IDs
+// There are two clustering functions - `getSingleLinkageClusters` and `getCompleteLinkageClusters`
+// They read pairwise distances from the input file,
+// form clusters based on the cutoff distance,
+// and return cluster members and their IDs
+
+// Single linkage clustering
 func getSingleLinkageClusters(inputPath string, cutOff float64, includeEqual bool) ([]clusterInfo, error) {
 	clustersID := make(map[string]int)
 	clusterMembers := make(map[int]map[string]bool)
@@ -182,7 +185,7 @@ func reassignClusterIDs(clustersID map[string]int) []clusterInfo {
 	return clusters
 }
 
-// exportClusters writes the cluster members and their IDs to the output file, sorted first by cluster ID and then by label
+// Write the cluster members and their IDs to the output file, sorted first by cluster ID and then by label
 func exportClusters(outputPath string, clusters []clusterInfo) error {
 	file, err := os.Create(outputPath)
 	if err != nil {
