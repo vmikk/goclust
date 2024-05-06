@@ -84,6 +84,73 @@ func getSingleLinkageClusters(inputPath string, cutOff float64, includeEqual boo
 	return sequentialClusters, nil
 }
 
+// Complete linkage clustering
+func getCompleteLinkageClusters(inputPath string, cutOff float64, includeEqual bool) ([]clusterInfo, error) {
+	clustersID := make(map[string]int)
+	clusterMembers := make(map[int]map[string]bool)
+	maxDistances := make(map[int]float64) // track maximum distances per cluster
+	// labelsSet := make(map[string]bool)
+
+	numClusters := 0
+	file, err := os.Open(inputPath)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := scanner.Text()
+		parts := strings.Fields(line)
+		if len(parts) < 3 {
+			continue // Skip insufficient data
+		}
+		label1, label2, distanceStr := parts[0], parts[1], parts[2]
+
+		distance, err := strconv.ParseFloat(distanceStr, 64)
+		if err != nil {
+			return nil, err
+		}
+
+		in1, ok1 := clustersID[label1]
+		in2, ok2 := clustersID[label2]
+
+		if !ok1 && !ok2 {
+			// Both labels are new, create a new cluster
+			clusterID := numClusters
+			clustersID[label1] = clusterID
+			clustersID[label2] = clusterID
+			clusterMembers[clusterID] = map[string]bool{label1: true, label2: true}
+			maxDistances[clusterID] = distance
+			numClusters++
+		} else if ok1 && !ok2 {
+			clustersID[label2] = in1
+			clusterMembers[in1][label2] = true
+			updateMaxDistance(maxDistances, distance, in1)
+		} else if !ok1 && ok2 {
+			clustersID[label1] = in2
+			clusterMembers[in2][label1] = true
+			updateMaxDistance(maxDistances, distance, in2)
+		} else if in1 != in2 {
+			// Based on maxDistances, decide whether to merge or not
+			shouldMerge := (includeEqual && maxDistances[in1] <= cutOff) || (!includeEqual && maxDistances[in1] < cutOff)
+			if shouldMerge {
+				// Merge the clusters
+				mergeClusters(clusterMembers, clustersID, in1, in2)
+				// After merging, merge their maxDistances and recompute
+				maxDistances[in1] = max(maxDistances[in1], maxDistances[in2])
+				delete(maxDistances, in2)
+			}
+		}
+	}
+
+	// Reassign cluster IDs to be zero-based and sequential
+	sequentialClusters := reassignClusterIDs(clustersID)
+
+	return sequentialClusters, nil
+}
+
+
 // Function to reassign cluster IDs sequentially
 func reassignClusterIDs(clustersID map[string]int) []clusterInfo {
 	newID := 0
