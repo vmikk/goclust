@@ -14,9 +14,9 @@ First, use USEARCH to calculate the distance matrix for your sequences with a ma
 usearch -calc_distmx seqs.fa -tabbedout mx.txt -maxdist 0.3
 ```
 
-Next, perform the clustering using the single_linkage tool:
+Next, perform the clustering using the `goclust` tool:
 ```bash
-single_linkage --input mx.txt --output clusters.txt --cutoff 0.01
+goclust --input mx.txt --output clusters.txt --cutoff 0.01 --method single
 ```
 
 This command is an alternative to the USEARCH clustering command:
