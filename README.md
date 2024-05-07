@@ -37,12 +37,12 @@ Missing entries in the matrix are assumed to be at the maximum possible distance
 
 ## Installation
 
-Download the `single_linkage` binary:
+Download the `goclust` binary:
 
 ```bash
-wget https://github.com/vmikk/single_linkage/releases/download/0.1/single_linkage
-chmod +x single_linkage
-./single_linkage
+wget https://github.com/vmikk/goclust/releases/download/0.1/goclust
+chmod +x goclust
+./goclust
 ``` 
 
 ## Usage
