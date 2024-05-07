@@ -47,11 +47,11 @@ chmod +x single_linkage
 
 ## Usage
 
-The `single_linkage` tool is designed for clustering sequences based on a sparse distance matrix.   
+The `goclust` tool is designed for clustering sequences based on a sparse distance matrix.   
 
 Usage example:
 ```bash
-single_linkage --cutoff <float> --includeequal=<bool> --input <file> --output <file>
+goclust --cutoff <float> --includeequal=<bool> --method <string> --input <file> --output <file>
 ```
 
 Parameters:
