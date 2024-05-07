@@ -9,6 +9,8 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+
+	"github.com/pbnjay/clustering"
 )
 
 // clusterInfo holds information about a single cluster member
@@ -87,87 +89,6 @@ func getSingleLinkageClusters(inputPath string, cutOff float64, includeEqual boo
 	return sequentialClusters, nil
 }
 
-// Complete linkage clustering
-func getCompleteLinkageClusters(inputPath string, cutOff float64, includeEqual bool) ([]clusterInfo, error) {
-	clustersID := make(map[string]int)
-	clusterMembers := make(map[int]map[string]bool)
-	maxDistances := make(map[int]float64) // track maximum distances per cluster
-	// labelsSet := make(map[string]bool)
-
-	numClusters := 0
-	file, err := os.Open(inputPath)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		line := scanner.Text()
-		parts := strings.Fields(line)
-		if len(parts) < 3 {
-			continue // Skip insufficient data
-		}
-		label1, label2, distanceStr := parts[0], parts[1], parts[2]
-
-		distance, err := strconv.ParseFloat(distanceStr, 64)
-		if err != nil {
-			return nil, err
-		}
-
-		in1, ok1 := clustersID[label1]
-		in2, ok2 := clustersID[label2]
-
-		if !ok1 && !ok2 {
-			// Both labels are new, create a new cluster
-			clusterID := numClusters
-			clustersID[label1] = clusterID
-			clustersID[label2] = clusterID
-			clusterMembers[clusterID] = map[string]bool{label1: true, label2: true}
-			maxDistances[clusterID] = distance
-			numClusters++
-		} else if ok1 && !ok2 {
-			clustersID[label2] = in1
-			clusterMembers[in1][label2] = true
-			updateMaxDistance(maxDistances, distance, in1)
-		} else if !ok1 && ok2 {
-			clustersID[label1] = in2
-			clusterMembers[in2][label1] = true
-			updateMaxDistance(maxDistances, distance, in2)
-		} else if in1 != in2 {
-			// Based on maxDistances, decide whether to merge or not
-			shouldMerge := (includeEqual && maxDistances[in1] <= cutOff) || (!includeEqual && maxDistances[in1] < cutOff)
-			if shouldMerge {
-				// Merge the clusters
-				mergeClusters(clusterMembers, clustersID, in1, in2)
-				// After merging, merge their maxDistances and recompute
-				maxDistances[in1] = max(maxDistances[in1], maxDistances[in2])
-				delete(maxDistances, in2)
-			}
-		}
-	}
-
-	// Reassign cluster IDs to be zero-based and sequential
-	sequentialClusters := reassignClusterIDs(clustersID)
-
-	return sequentialClusters, nil
-}
-
-// Helper functions to handle max distances and merging
-func updateMaxDistance(maxDistances map[int]float64, newDistance float64, clusterID int) {
-	if currentMax, exists := maxDistances[clusterID]; !exists || newDistance > currentMax {
-		maxDistances[clusterID] = newDistance
-	}
-}
-
-func mergeClusters(clusterMembers map[int]map[string]bool, clustersID map[string]int, dest, src int) {
-	for label := range clusterMembers[src] {
-		clustersID[label] = dest
-		clusterMembers[dest][label] = true
-	}
-	delete(clusterMembers, src)
-}
-
 // Function to reassign cluster IDs sequentially
 func reassignClusterIDs(clustersID map[string]int) []clusterInfo {
 	newID := 0
@@ -183,6 +104,79 @@ func reassignClusterIDs(clustersID map[string]int) []clusterInfo {
 	}
 
 	return clusters
+}
+
+// Complete linkage clustering
+func getCompleteLinkageClusters(inputPath string, cutOff float64) ([]clusterInfo, error) {
+	file, err := os.Open(inputPath)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	distances := make(clustering.DistanceMap)
+	labels := make(map[string]bool) // Track all unique labels
+	scanner := bufio.NewScanner(file)
+
+	// First pass: collect all labels
+	for scanner.Scan() {
+		line := scanner.Text()
+		parts := strings.Fields(line)
+		if len(parts) < 3 {
+			continue
+		}
+		labels[parts[0]] = true
+		labels[parts[1]] = true
+	}
+
+	// Initialize maximum distances
+	for label1 := range labels {
+		distMap := make(map[clustering.ClusterItem]float64)
+		for label2 := range labels {
+			if label1 != label2 { // Do not set distance to self
+				distMap[clustering.ClusterItem(label2)] = 1.0 // Use 1.0 as the max distance
+			}
+		}
+		distances[label1] = distMap
+	}
+
+	// Second pass: set actual distances from file
+	file.Seek(0, 0) // Reset file pointer to beginning
+	scanner = bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := scanner.Text()
+		parts := strings.Fields(line)
+		if len(parts) < 3 {
+			continue
+		}
+		distance, _ := strconv.ParseFloat(parts[2], 64)
+		distances[parts[0]][clustering.ClusterItem(parts[1])] = distance
+		distances[parts[1]][clustering.ClusterItem(parts[0])] = distance
+	}
+
+	clusters := clustering.NewDistanceMapClusterSet(distances)
+	clustering.Cluster(clusters, clustering.Threshold(cutOff), clustering.CompleteLinkage())
+
+	var result []clusterInfo
+	clusterIDMap := make(map[int]int)
+	currentClusterID := 0
+
+	clusters.EachCluster(-1, func(cluster int) {
+		clusters.EachItem(cluster, func(item clustering.ClusterItem) {
+			label, ok := item.(string)
+			if !ok {
+				log.Printf("Type assertion failed for item: %+v", item)
+				return
+			}
+			if _, exists := clusterIDMap[cluster]; !exists {
+				clusterIDMap[cluster] = currentClusterID
+				currentClusterID++
+			}
+			result = append(result, clusterInfo{Label: label, ClusterID: clusterIDMap[cluster]})
+		})
+	})
+
+	return result, nil
 }
 
 // Write the cluster members and their IDs to the output file, sorted first by cluster ID and then by label
@@ -234,7 +228,7 @@ func main() {
 	if *method == "single" {
 		clusters, err = getSingleLinkageClusters(*input, *cutoff, *includeEqual)
 	} else {
-		clusters, err = getCompleteLinkageClusters(*input, *cutoff, *includeEqual)
+		clusters, err = getCompleteLinkageClusters(*input, *cutoff)
 	}
 
 	if err != nil {
