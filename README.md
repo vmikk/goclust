@@ -74,3 +74,21 @@ Clustering results obtained with `goclust` closely match
 those obtained with `usearch -cluster_aggd`, except for the differences in cluster labels.
 The Rand index between the two methods is 1, indicating perfect agreement.
 
+### Performance benchmark
+
+Performance comparisons are conducted using `hyperfine`:
+
+```bash
+hyperfine \
+  --warmup 3 --runs 5 \
+  --export-markdown SING_BENCH.md \
+  "usearch -cluster_aggd mx.txt -clusterout clusters_USEARCH.txt -id 0.99 -linkage min" \
+  "./goclust --input mx.txt --output clusters_SL.txt --cutoff 0.01 --method single"
+
+The benchmark results are as follows:
+
+| Command               |      Mean [s] | Min [s] | Max [s] |    Relative |
+|:----------------------|--------------:|--------:|--------:|------------:|
+| usearch -cluster_aggd | 2.580 ± 0.054 |   2.531 |   2.665 | 2.25 ± 0.06 |
+| goclust               | 1.145 ± 0.019 |   1.117 |   1.168 |        1.00 |
+
