@@ -65,3 +65,12 @@ Parameters:
 - `--includeequal`: This option determines whether distances equal to the specified cutoff should be included in the clustering process. By default, this option is set to true (`--includeequal=true`), allowing sequences with pairwise distances exactly equal to the cutoff to be included in the same cluster. Setting this option to false (`--includeEqual=false`) changes the clustering to only consider pairwise distances strictly greater than the cutoff value, potentially leading to more, smaller clusters.
 
 - `--method`: Specifies the clustering method to use. Choose `single` for single linkage where a sequence joins a cluster if it is close to any sequence within the cluster, allowing larger clusters with no upper bound on diameter. Choose `complete` for complete linkage (equivalent to maximum linkage), where all sequences in a cluster must be within a certain distance threshold from each other, resulting in generally smaller clusters. The default setting is `single`.
+
+## Benchmarks
+
+### Equivalency of results
+
+Clustering results obtained with `goclust` closely match 
+those obtained with `usearch -cluster_aggd`, except for the differences in cluster labels.
+The Rand index between the two methods is 1, indicating perfect agreement.
+
