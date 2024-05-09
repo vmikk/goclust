@@ -177,7 +177,7 @@ def complete_linkage(input_path, cut_off, strict = False):
 
 def main():
     if len(sys.argv) != 4:
-        print("Usage: python script.py <input_file> <output_file> <cutoff>")
+        print("Usage: python complete_linkage.py <input_file> <output_file> <cutoff>")
         sys.exit(1)
 
     input_file = sys.argv[1]
