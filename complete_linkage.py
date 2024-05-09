@@ -6,6 +6,8 @@ Author - Felipe González Casabianca
 2024, May 09
 """
 
+import sys
+
 # Constants
 C1 = "CLUSTER_1"
 C2 = "CLUSTER_2"
@@ -172,3 +174,21 @@ def complete_linkage(input_path, cut_off, strict = False):
 
     return label_list, membership
 
+
+def main():
+    if len(sys.argv) != 4:
+        print("Usage: python script.py <input_file> <output_file> <cutoff>")
+        sys.exit(1)
+
+    input_file = sys.argv[1]
+    output_file = sys.argv[2]
+    cutoff = float(sys.argv[3])
+
+    labels, memberships = complete_linkage(input_file, cutoff)
+
+    with open(output_file, 'w') as file:
+        for label, membership in zip(labels, memberships):
+            file.write(f"{label} {membership}\n")
+
+if __name__ == "__main__":
+    main()
