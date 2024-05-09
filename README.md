@@ -72,7 +72,7 @@ Parameters:
 
 Clustering results obtained with `goclust` closely match 
 those obtained with `usearch -cluster_aggd`, except for the differences in cluster labels.
-The Rand index between the two methods is 1, indicating perfect agreement.
+The [Rand index](https://en.wikipedia.org/wiki/Rand_index) between the two methods is 1, indicating perfect agreement.
 
 ### Performance benchmark
 
