@@ -84,6 +84,7 @@ hyperfine \
   --export-markdown SING_BENCH.md \
   "usearch -cluster_aggd mx.txt -clusterout clusters_USEARCH.txt -id 0.99 -linkage min" \
   "./goclust --input mx.txt --output clusters_SL.txt --cutoff 0.01 --method single"
+```
 
 The benchmark results are as follows:
 
