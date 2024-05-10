@@ -188,7 +188,7 @@ def main():
 
     with open(output_file, 'w') as file:
         for label, membership in zip(labels, memberships):
-            file.write(f"{label} {membership}\n")
+            file.write(f"{membership}\t{label}\n")
 
 if __name__ == "__main__":
     main()
