@@ -76,7 +76,9 @@ The [Rand index](https://en.wikipedia.org/wiki/Rand_index) between the two metho
 
 ### Performance benchmark
 
-Performance comparisons are conducted using `hyperfine`:
+**Input data**: `mx.txt` - sparse distance matrix, 24MB, 1,468 unique sequences, 841,080 lines.  
+
+Performance comparisons are conducted using `goclust` v.0.2 (ex-`single_linkage`) and `hyperfine`:
 
 ```bash
 hyperfine \
@@ -88,8 +90,10 @@ hyperfine \
 
 The benchmark results are as follows:
 
-| Command               |      Mean [s] | Min [s] | Max [s] |    Relative |
-|:----------------------|--------------:|--------:|--------:|------------:|
-| usearch -cluster_aggd | 2.580 ± 0.054 |   2.531 |   2.665 | 2.25 ± 0.06 |
-| goclust               | 1.145 ± 0.019 |   1.117 |   1.168 |        1.00 |
+| Command                 |      Mean [s] | Min [s] | Max [s] |    Relative |
+|:------------------------| -------------:| -------:| -------:| -----------:|
+| `usearch -cluster_aggd` | 2.593 ± 0.467 |   2.220 |   3.160 | 5.96 ± 3.93 |
+| `goclust`               | 0.435 ± 0.276 |   0.218 |   0.881 |        1.00 |
 
+
+Processing of a larger file (11GB, 29,278 unique sequences, 393,645,092 lines), which `usearch -cluster_aggd` fails to handle due to memory limitations, takes approximately 144 seconds.
