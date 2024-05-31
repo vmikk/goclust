@@ -78,7 +78,10 @@ The [Rand index](https://en.wikipedia.org/wiki/Rand_index) between the two metho
 
 **Input data**: `mx.txt` - sparse distance matrix, 24MB, 1,468 unique sequences, 841,080 lines.  
 
-Performance comparisons are conducted using `goclust` v.0.2 (ex-`single_linkage`) and `hyperfine`:
+Performance comparisons are conducted using 
+`goclust` v.0.2 (ex-`single_linkage`), 
+`usearch` v.11.0.667 (i86linux32), 
+and `hyperfine` v.1.18.0:  
 
 ```bash
 hyperfine \
