@@ -45,6 +45,13 @@ chmod +x goclust
 ./goclust
 ``` 
 
+Or build the binary yourself:
+
+```bash
+go build -ldflags="-s -w" -o ./builds/goclust ./goclust.go
+```bash
+
+
 ## Usage
 
 The `goclust` tool is designed for clustering sequences based on a sparse distance matrix.   
